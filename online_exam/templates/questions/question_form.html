@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="bi bi-question-circle"></i> {{ title }}</h5>
+                    <small>آزمون: {{ exam.title }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_text" class="form-label">{{ form.text.label }}</label>
+                            {{ form.text }}
+                            {% if form.text.errors %}
+                                <div class="text-danger small">{{ form.text.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_qtype" class="form-label">{{ form.qtype.label }}</label>
+                                {{ form.qtype }}
+                                {% if form.qtype.errors %}
+                                    <div class="text-danger small">{{ form.qtype.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_max_score" class="form-label">{{ form.max_score.label }}</label>
+                                {{ form.max_score }}
+                                {% if form.max_score.errors %}
+                                    <div class="text-danger small">{{ form.max_score.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_order" class="form-label">{{ form.order.label }}</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                    <div class="text-danger small">{{ form.order.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Auto grade regex for short answer -->
+                        <div class="mb-3" id="auto-grade-section">
+                            <label for="id_auto_grade_regex" class="form-label">{{ form.auto_grade_regex.label }}</label>
+                            {{ form.auto_grade_regex }}
+                            <small class="text-muted">برای سوالات پاسخ کوتاه - پاسخ صحیح را وارد کنید</small>
+                            {% if form.auto_grade_regex.errors %}
+                                <div class="text-danger small">{{ form.auto_grade_regex.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Choices for MCQ -->
+                        <div id="choices-section" style="display: none;">
+                            <hr>
+                            <h6><i class="bi bi-list-ul"></i> گزینه‌ها</h6>
+                            <p class="text-muted small">گزینه صحیح را علامت بزنید</p>
+                            
+                            {{ choice_formset.management_form }}
+                            
+                            <div id="choices-container">
+                                {% for choice_form in choice_formset %}
+                                    <div class="row mb-2 choice-row">
+                                        <div class="col-md-8">
+                                            {{ choice_form.text }}
+                                            {% if choice_form.text.errors %}
+                                                <div class="text-danger small">{{ choice_form.text.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check mt-2">
+                                                {{ choice_form.is_correct }}
+                                                <label class="form-check-label">صحیح</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            {{ choice_form.order }}
+                                            {{ choice_form.id }}
+                                            {% if choice_form.DELETE %}
+                                                <div class="form-check mt-2">
+                                                    {{ choice_form.DELETE }}
+                                                    <label class="form-check-label text-danger">حذف</label>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'questions:exam_detail' exam.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> انصراف
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> ذخیره سوال
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const qtypeSelect = document.getElementById('question-type-select');
+        const choicesSection = document.getElementById('choices-section');
+        const autoGradeSection = document.getElementById('auto-grade-section');
+        
+        function toggleSections() {
+            const qtype = qtypeSelect.value;
+            
+            if (qtype === 'mcq') {
+                choicesSection.style.display = 'block';
+                autoGradeSection.style.display = 'none';
+            } else if (qtype === 'short') {
+                choicesSection.style.display = 'none';
+                autoGradeSection.style.display = 'block';
+            } else {
+                choicesSection.style.display = 'none';
+                autoGradeSection.style.display = 'none';
+            }
+        }
+        
+        qtypeSelect.addEventListener('change', toggleSections);
+        toggleSections(); // Initial call
+    });
+</script>
+{% endblock %}

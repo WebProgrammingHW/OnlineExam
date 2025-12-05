@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}داشبورد دانشجو - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-speedometer2"></i> داشبورد دانشجو</h2>
+            <p class="text-muted">خوش آمدید، {{ user.get_full_name|default:user.username }}</p>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ available_exams.count }}</h4>
+                            <p class="mb-0">آزمون‌های موجود</p>
+                        </div>
+                        <i class="bi bi-journal-text fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ in_progress_count }}</h4>
+                            <p class="mb-0">در حال انجام</p>
+                        </div>
+                        <i class="bi bi-hourglass-split fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ completed_count }}</h4>
+                            <p class="mb-0">تکمیل شده</p>
+                        </div>
+                        <i class="bi bi-check-circle fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Exams -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-journal-text"></i> آزمون‌های قابل شرکت</h5>
+                    <a href="{% url 'dashboard:search' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-search"></i> جستجو
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if available_exams %}
+                        <div class="row">
+                            {% for exam in available_exams|slice:":6" %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card exam-card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ exam.title }}</h5>
+                                            <p class="card-text text-muted">
+                                                <i class="bi bi-tag"></i> {{ exam.topic }}<br>
+                                                <i class="bi bi-clock"></i> {{ exam.duration_minutes }} دقیقه<br>
+                                                <i class="bi bi-star"></i> {{ exam.total_score }} نمره
+                                            </p>
+                                        </div>
+                                        <div class="card-footer">
+                                            <a href="{% url 'attempts:start_exam' exam.pk %}" class="btn btn-primary w-100">
+                                                <i class="bi bi-play-fill"></i> شروع آزمون
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">در حال حاضر آزمونی موجود نیست.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Attempts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-card-checklist"></i> آزمون‌های من</h5>
+                    <a href="{% url 'attempts:my_attempts' %}" class="btn btn-sm btn-outline-primary">مشاهده همه</a>
+                </div>
+                <div class="card-body">
+                    {% if my_attempts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>آزمون</th>
+                                        <th>تاریخ شرکت</th>
+                                        <th>وضعیت</th>
+                                        <th>نمره</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attempt in my_attempts|slice:":5" %}
+                                        <tr>
+                                            <td>{{ attempt.exam.title }}</td>
+                                            <td>{{ attempt.start_time|date:"Y/m/d H:i" }}</td>
+                                            <td>
+                                                {% if attempt.status == 'in_progress' %}
+                                                    <span class="badge bg-warning text-dark">در حال انجام</span>
+                                                {% elif attempt.status == 'submitted' %}
+                                                    <span class="badge bg-info">ارسال شده</span>
+                                                {% elif attempt.status == 'graded' %}
+                                                    <span class="badge bg-success">نمره‌گذاری شده</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ attempt.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if attempt.total_score is not None %}
+                                                    {{ attempt.total_score }} از {{ attempt.exam.total_score }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if attempt.status == 'in_progress' %}
+                                                    <a href="{% url 'attempts:take_exam' attempt.pk %}" class="btn btn-sm btn-warning">
+                                                        <i class="bi bi-play-fill"></i> ادامه
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{% url 'attempts:attempt_result' attempt.pk %}" class="btn btn-sm btn-info">
+                                                        <i class="bi bi-eye"></i> مشاهده
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">هنوز در آزمونی شرکت نکرده‌اید.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

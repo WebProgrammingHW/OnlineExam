@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}آزمون - {{ attempt.exam.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-fixed {
+        position: fixed;
+        top: 70px;
+        left: 20px;
+        z-index: 1000;
+    }
+    .question-nav {
+        position: sticky;
+        top: 70px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Timer -->
+        <div class="timer-fixed">
+            <div class="timer-box" id="timer">
+                <i class="bi bi-clock"></i>
+                <span id="timer-display">--:--</span>
+            </div>
+        </div>
+        
+        <!-- Sidebar - Question Navigation -->
+        <div class="col-md-2">
+            <div class="card question-nav">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-list-ol"></i> سوالات</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for item in question_list %}
+                            <a href="#question-{{ item.question.id }}" class="btn btn-outline-primary btn-sm">
+                                {{ forloop.counter }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content - Questions -->
+        <div class="col-md-10">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> {{ attempt.exam.title }}</h5>
+                    <span>{{ attempt.exam.questions.count }} سوال | {{ attempt.exam.total_score }} نمره</span>
+                </div>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data" id="exam-form">
+                {% csrf_token %}
+                
+                {% for item in question_list %}
+                    <div class="card question-card mb-4" id="question-{{ item.question.id }}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-primary">سوال {{ forloop.counter }}</span>
+                                {% if item.question.qtype == 'short' %}
+                                    <span class="badge bg-info">پاسخ کوتاه</span>
+                                {% elif item.question.qtype == 'mcq' %}
+                                    <span class="badge bg-success">چندگزینه‌ای</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">آپلود فایل</span>
+                                {% endif %}
+                            </div>
+                            <span class="badge bg-secondary">{{ item.question.max_score }} نمره</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead">{{ item.question.text }}</p>
+                            
+                            {% if item.question.qtype == 'short' %}
+                                <div class="mb-3">
+                                    <textarea name="question_{{ item.question.id }}" 
+                                              class="form-control" 
+                                              rows="3" 
+                                              placeholder="پاسخ خود را بنویسید...">{{ item.answer.text_answer|default:"" }}</textarea>
+                                </div>
+                            {% elif item.question.qtype == 'mcq' %}
+                                <div class="mb-3">
+                                    {% for choice in item.choices %}
+                                        <div class="form-check mb-2">
+                                            <input type="radio" 
+                                                   name="question_{{ item.question.id }}" 
+                                                   value="{{ choice.id }}" 
+                                                   class="form-check-input"
+                                                   id="choice_{{ choice.id }}"
+                                                   {% if item.answer.selected_choice_id == choice.id %}checked{% endif %}>
+                                            <label class="form-check-label" for="choice_{{ choice.id }}">
+                                                {{ choice.text }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="mb-3">
+                                    {% if item.answer.uploaded_file %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-file-earmark"></i>
+                                            فایل آپلود شده: {{ item.answer.uploaded_file.name }}
+                                        </div>
+                                    {% endif %}
+                                    <input type="file" 
+                                           name="question_{{ item.question.id }}" 
+                                           class="form-control">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="card mb-4">
+                    <div class="card-body d-flex justify-content-between">
+                        <button type="submit" name="save" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-save"></i> ذخیره موقت
+                        </button>
+                        <button type="submit" name="submit" class="btn btn-success btn-lg" 
+                                onclick="return confirm('آیا از ارسال نهایی آزمون مطمئن هستید؟')">
+                            <i class="bi bi-send"></i> ارسال نهایی
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let remainingSeconds = {{ remaining_seconds }};
+    const timerDisplay = document.getElementById('timer-display');
+    const timerBox = document.getElementById('timer');
+    const examForm = document.getElementById('exam-form');
+    
+    function updateTimer() {
+        if (remainingSeconds <= 0) {
+            timerDisplay.textContent = '۰۰:۰۰';
+            alert('زمان آزمون به پایان رسید!');
+            // Auto submit
+            const submitInput = document.createElement('input');
+            submitInput.type = 'hidden';
+            submitInput.name = 'submit';
+            submitInput.value = '1';
+            examForm.appendChild(submitInput);
+            examForm.submit();
+            return;
+        }
+        
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        
+        timerDisplay.textContent = 
+            String(minutes).padStart(2, '0') + ':' + 
+            String(seconds).padStart(2, '0');
+        
+        // Warning when less than 5 minutes
+        if (remainingSeconds <= 300) {
+            timerBox.classList.add('warning');
+            timerBox.classList.remove('bg-danger');
+            timerBox.style.backgroundColor = '#dc3545';
+            timerBox.style.animation = 'pulse 1s infinite';
+        }
+        
+        remainingSeconds--;
+    }
+    
+    updateTimer();
+    setInterval(updateTimer, 1000);
+    
+    // Auto-save every 60 seconds
+    setInterval(function() {
+        const formData = new FormData(examForm);
+        formData.append('save', '1');
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            console.log('Auto-saved');
+        });
+    }, 60000);
+</script>
+
+<style>
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}

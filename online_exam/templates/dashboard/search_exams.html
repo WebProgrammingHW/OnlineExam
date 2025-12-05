@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}جستجوی آزمون - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-search"></i> جستجوی آزمون</h2>
+        </div>
+    </div>
+    
+    <!-- Search Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label">عنوان آزمون</label>
+                            <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="جستجو...">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">موضوع</label>
+                            <select name="topic" class="form-control">
+                                <option value="">همه موضوعات</option>
+                                {% for t in topics %}
+                                    {% if t %}
+                                        <option value="{{ t }}" {% if t == topic %}selected{% endif %}>{{ t }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> جستجو
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>نتایج جستجو ({{ exams.count }} آزمون)</h5>
+                </div>
+                <div class="card-body">
+                    {% if exams %}
+                        <div class="row">
+                            {% for exam in exams %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card exam-card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ exam.title }}</h5>
+                                            <p class="card-text">
+                                                <span class="badge bg-info">{{ exam.topic }}</span>
+                                            </p>
+                                            <p class="card-text text-muted small">
+                                                {{ exam.description|truncatewords:20 }}
+                                            </p>
+                                            <ul class="list-unstyled small">
+                                                <li><i class="bi bi-clock"></i> {{ exam.duration_minutes }} دقیقه</li>
+                                                <li><i class="bi bi-star"></i> {{ exam.total_score }} نمره</li>
+                                                <li><i class="bi bi-calendar"></i> {{ exam.start_at|date:"Y/m/d" }}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="card-footer">
+                                            {% if user.is_student %}
+                                                <a href="{% url 'attempts:start_exam' exam.pk %}" class="btn btn-primary w-100">
+                                                    <i class="bi bi-play-fill"></i> شروع آزمون
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'questions:exam_detail' exam.pk %}" class="btn btn-info w-100">
+                                                    <i class="bi bi-eye"></i> مشاهده
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">آزمونی یافت نشد.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

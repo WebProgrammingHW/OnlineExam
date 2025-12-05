@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}آزمون‌های موجود - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-journal-text"></i> آزمون‌های موجود</h2>
+            <p class="text-muted">آزمون‌هایی که می‌توانید در آن‌ها شرکت کنید</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% if exams %}
+            {% for exam in exams %}
+                <div class="col-md-4 mb-4">
+                    <div class="card exam-card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">{{ exam.title }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ exam.description|truncatewords:30|default:"بدون توضیحات" }}</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-tag text-info"></i> موضوع: {{ exam.topic }}</li>
+                                <li><i class="bi bi-clock text-warning"></i> مدت: {{ exam.duration_minutes }} دقیقه</li>
+                                <li><i class="bi bi-star text-success"></i> نمره کل: {{ exam.total_score }}</li>
+                                <li><i class="bi bi-question-circle text-primary"></i> تعداد سوالات: {{ exam.questions.count }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'attempts:start_exam' exam.pk %}" class="btn btn-primary w-100">
+                                <i class="bi bi-play-fill"></i> شروع آزمون
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-journal-x display-1 text-muted"></i>
+                    <p class="text-muted mt-3">در حال حاضر آزمونی موجود نیست.</p>
+                    <a href="{% url 'dashboard:search' %}" class="btn btn-primary">
+                        <i class="bi bi-search"></i> جستجوی آزمون
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

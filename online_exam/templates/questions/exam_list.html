@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}آزمون‌های من - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-journal-text"></i> آزمون‌های من</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'questions:exam_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> آزمون جدید
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if exams %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>عنوان</th>
+                                        <th>موضوع</th>
+                                        <th>زمان شروع</th>
+                                        <th>مدت</th>
+                                        <th>نمره کل</th>
+                                        <th>تعداد سوالات</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam in exams %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <a href="{% url 'questions:exam_detail' exam.pk %}">
+                                                    {{ exam.title }}
+                                                </a>
+                                            </td>
+                                            <td><span class="badge bg-info">{{ exam.topic }}</span></td>
+                                            <td>{{ exam.start_at|date:"Y/m/d H:i" }}</td>
+                                            <td>{{ exam.duration_minutes }} دقیقه</td>
+                                            <td>{{ exam.total_score }}</td>
+                                            <td>{{ exam.questions.count }}</td>
+                                            <td>
+                                                {% if exam.published %}
+                                                    <span class="badge bg-success">منتشر شده</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">پیش‌نویس</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'questions:exam_detail' exam.pk %}" class="btn btn-info" title="مشاهده">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'questions:exam_update' exam.pk %}" class="btn btn-warning" title="ویرایش">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="{% url 'questions:exam_delete' exam.pk %}" class="btn btn-danger" title="حذف">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-journal-x display-1 text-muted"></i>
+                            <p class="text-muted mt-3">هنوز آزمونی ایجاد نکرده‌اید.</p>
+                            <a href="{% url 'questions:exam_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-lg"></i> ایجاد اولین آزمون
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

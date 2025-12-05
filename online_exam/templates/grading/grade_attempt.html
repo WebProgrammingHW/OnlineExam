@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}تصحیح پاسخنامه - {{ attempt.student }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4><i class="bi bi-journal-check"></i> {{ attempt.exam.title }}</h4>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-person"></i> 
+                                دانشجو: <strong>{{ attempt.student.get_full_name|default:attempt.student.username }}</strong>
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-clock"></i>
+                                ارسال شده: {{ attempt.submitted_at|date:"Y/m/d H:i" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <form method="post" action="{% url 'grading:auto_grade' attempt.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-success">
+                                    <i class="bi bi-magic"></i> تصحیح خودکار
+                                </button>
+                            </form>
+                            <a href="{% url 'grading:attempt_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-right"></i> بازگشت
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grading Form -->
+            <form method="post">
+                {% csrf_token %}
+                
+                {% for item in answer_forms %}
+                <div class="card mb-3 question-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <strong>سوال {{ forloop.counter }}</strong>
+                            {% if item.answer.question.qtype == 'short' %}
+                                <span class="badge bg-info">پاسخ کوتاه</span>
+                            {% elif item.answer.question.qtype == 'mcq' %}
+                                <span class="badge bg-primary">چندگزینه‌ای</span>
+                            {% else %}
+                                <span class="badge bg-secondary">فایل</span>
+                            {% endif %}
+                        </span>
+                        <span class="text-muted">
+                            نمره: {{ item.answer.question.max_score }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Question Text -->
+                        <div class="mb-3">
+                            <strong>متن سوال:</strong>
+                            <p class="mt-2">{{ item.answer.question.text }}</p>
+                        </div>
+
+                        <!-- Student Answer -->
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <strong>پاسخ دانشجو:</strong>
+                            {% if item.answer.question.qtype == 'short' %}
+                                <p class="mt-2 mb-0">{{ item.answer.text_answer|default:"پاسخی ثبت نشده" }}</p>
+                            {% elif item.answer.question.qtype == 'mcq' %}
+                                {% if item.answer.selected_choice %}
+                                    <p class="mt-2 mb-0">
+                                        {{ item.answer.selected_choice.text }}
+                                        {% if item.answer.selected_choice.is_correct %}
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-x-circle-fill text-danger"></i>
+                                        {% endif %}
+                                    </p>
+                                    <!-- Show correct answer if wrong -->
+                                    {% if not item.answer.selected_choice.is_correct %}
+                                        <p class="mt-2 mb-0 text-success">
+                                            <small>پاسخ صحیح: 
+                                            {% for choice in item.answer.question.choices.all %}
+                                                {% if choice.is_correct %}{{ choice.text }}{% endif %}
+                                            {% endfor %}
+                                            </small>
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="mt-2 mb-0 text-muted">گزینه‌ای انتخاب نشده</p>
+                                {% endif %}
+                            {% else %}
+                                {% if item.answer.uploaded_file %}
+                                    <p class="mt-2 mb-0">
+                                        <a href="{{ item.answer.uploaded_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-download"></i> دانلود فایل
+                                        </a>
+                                    </p>
+                                {% else %}
+                                    <p class="mt-2 mb-0 text-muted">فایلی آپلود نشده</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Grading Fields -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">نمره (حداکثر {{ item.answer.question.max_score }})</label>
+                                {{ item.form.score }}
+                                {% if item.answer.is_auto_graded %}
+                                    <small class="text-success"><i class="bi bi-robot"></i> تصحیح خودکار</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-9">
+                                <label class="form-label">توضیحات</label>
+                                {{ item.form.comments }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-lg"></i> ثبت نمرات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

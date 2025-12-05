@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}نتیجه آزمون - {{ attempt.exam.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Result Header -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h3 class="mb-3">{{ attempt.exam.title }}</h3>
+                    
+                    {% if attempt.status == 'graded' %}
+                        <div class="display-4 mb-3">
+                            <span class="text-primary">{{ attempt.total_score|floatformat:1 }}</span>
+                            <span class="text-muted fs-4">/ {{ attempt.exam.total_score }}</span>
+                        </div>
+                        <span class="badge bg-success fs-6">تصحیح شده</span>
+                    {% elif attempt.status == 'submitted' %}
+                        <div class="mb-3">
+                            <i class="bi bi-hourglass-split text-warning display-4"></i>
+                        </div>
+                        <span class="badge bg-warning text-dark fs-6">در انتظار تصحیح</span>
+                        <p class="text-muted mt-3">پاسخ‌های شما ثبت شده و منتظر تصحیح توسط استاد می‌باشد.</p>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6">{{ attempt.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exam Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> اطلاعات آزمون
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>موضوع:</strong> {{ attempt.exam.topic|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>زمان شروع:</strong> {{ attempt.start_time|date:"Y/m/d H:i" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>زمان ارسال:</strong> {{ attempt.submitted_at|date:"Y/m/d H:i"|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answers Detail (only if graded) -->
+            {% if attempt.status == 'graded' %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-list-check"></i> جزئیات پاسخ‌ها
+                </div>
+                <div class="card-body">
+                    {% for answer in answers %}
+                    <div class="border rounded p-3 mb-3 {% if answer.score == answer.question.max_score %}border-success{% elif answer.score == 0 %}border-danger{% else %}border-warning{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <strong>سوال {{ forloop.counter }}:</strong>
+                            <span class="badge {% if answer.score == answer.question.max_score %}bg-success{% elif answer.score == 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                {{ answer.score|floatformat:1|default:"0" }} / {{ answer.question.max_score }}
+                            </span>
+                        </div>
+                        <p class="mb-2">{{ answer.question.text }}</p>
+                        
+                        <div class="bg-light p-2 rounded">
+                            <small class="text-muted">پاسخ شما:</small>
+                            {% if answer.question.qtype == 'short' %}
+                                <p class="mb-0">{{ answer.text_answer|default:"پاسخی ثبت نشده" }}</p>
+                            {% elif answer.question.qtype == 'mcq' %}
+                                {% if answer.selected_choice %}
+                                    <p class="mb-0">
+                                        {{ answer.selected_choice.text }}
+                                        {% if answer.selected_choice.is_correct %}
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-x-circle-fill text-danger"></i>
+                                        {% endif %}
+                                    </p>
+                                {% else %}
+                                    <p class="mb-0 text-muted">گزینه‌ای انتخاب نشده</p>
+                                {% endif %}
+                            {% else %}
+                                {% if answer.uploaded_file %}
+                                    <p class="mb-0">فایل آپلود شده</p>
+                                {% else %}
+                                    <p class="mb-0 text-muted">فایلی آپلود نشده</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'attempts:my_attempts' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> بازگشت به لیست آزمون‌ها
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

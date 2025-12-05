@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}شروع آزمون - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="bi bi-journal-text"></i> {{ exam.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-info-circle display-1 text-info"></i>
+                    </div>
+                    
+                    <h5 class="text-center mb-4">اطلاعات آزمون</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-tag"></i> موضوع:</span>
+                                    <span class="badge bg-info">{{ exam.topic }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-clock"></i> مدت زمان:</span>
+                                    <span><strong>{{ exam.duration_minutes }} دقیقه</strong></span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-star"></i> نمره کل:</span>
+                                    <span>{{ exam.total_score }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-question-circle"></i> تعداد سوالات:</span>
+                                    <span>{{ exam.questions.count }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% if exam.description %}
+                        <div class="mt-4">
+                            <h6>توضیحات:</h6>
+                            <p class="text-muted">{{ exam.description }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>توجه:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>پس از شروع آزمون، تایمر شروع به کار می‌کند.</li>
+                            <li>در صورت اتمام زمان، پاسخ‌ها به صورت خودکار ثبت می‌شوند.</li>
+                            <li>امکان شرکت مجدد در آزمون وجود ندارد.</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'attempts:exam_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> بازگشت
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-play-fill"></i> شروع آزمون
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

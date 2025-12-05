@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exam.title }} - آزمون آنلاین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Exam Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4><i class="bi bi-journal-text"></i> {{ exam.title }}</h4>
+                    <div>
+                        {% if exam.published %}
+                            <span class="badge bg-success fs-6">منتشر شده</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">پیش‌نویس</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p>{{ exam.description|default:"بدون توضیحات" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-tag"></i> موضوع:</span>
+                                    <span class="badge bg-info">{{ exam.topic }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-calendar"></i> زمان شروع:</span>
+                                    <span>{{ exam.start_at|date:"Y/m/d H:i" }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-clock"></i> مدت:</span>
+                                    <span>{{ exam.duration_minutes }} دقیقه</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-star"></i> نمره کل:</span>
+                                    <span>{{ exam.total_score }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><i class="bi bi-question-circle"></i> تعداد سوالات:</span>
+                                    <span>{{ questions.count }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'questions:exam_update' exam.pk %}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> ویرایش آزمون
+                        </a>
+                        <a href="{% url 'questions:question_create' exam.pk %}" class="btn btn-success">
+                            <i class="bi bi-plus-lg"></i> افزودن سوال
+                        </a>
+                        <a href="{% url 'questions:exam_delete' exam.pk %}" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> حذف آزمون
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Questions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-list-ol"></i> سوالات آزمون</h5>
+                    <a href="{% url 'questions:question_create' exam.pk %}" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-lg"></i> سوال جدید
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        {% for question in questions %}
+                            <div class="card question-card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6>
+                                                <span class="badge bg-primary me-2">{{ forloop.counter }}</span>
+                                                {% if question.qtype == 'short' %}
+                                                    <span class="badge bg-info">پاسخ کوتاه</span>
+                                                {% elif question.qtype == 'mcq' %}
+                                                    <span class="badge bg-success">چندگزینه‌ای</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">فایل</span>
+                                                {% endif %}
+                                                <span class="badge bg-secondary">{{ question.max_score }} نمره</span>
+                                            </h6>
+                                            <p class="mb-2">{{ question.text }}</p>
+                                            
+                                            {% if question.qtype == 'mcq' %}
+                                                <div class="ms-4">
+                                                    <small class="text-muted">گزینه‌ها:</small>
+                                                    <ul class="list-unstyled mb-0">
+                                                        {% for choice in question.choices.all %}
+                                                            <li>
+                                                                {% if choice.is_correct %}
+                                                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                                                {% else %}
+                                                                    <i class="bi bi-circle text-muted"></i>
+                                                                {% endif %}
+                                                                {{ choice.text }}
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if question.auto_grade_regex %}
+                                                <small class="text-muted">
+                                                    <i class="bi bi-robot"></i> پاسخ صحیح: {{ question.auto_grade_regex }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'questions:question_update' question.pk %}" class="btn btn-outline-warning" title="ویرایش">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'questions:question_delete' question.pk %}" class="btn btn-outline-danger" title="حذف">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-question-circle display-4 text-muted"></i>
+                            <p class="text-muted mt-2">هنوز سوالی اضافه نشده است.</p>
+                            <a href="{% url 'questions:question_create' exam.pk %}" class="btn btn-success">
+                                <i class="bi bi-plus-lg"></i> افزودن اولین سوال
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
